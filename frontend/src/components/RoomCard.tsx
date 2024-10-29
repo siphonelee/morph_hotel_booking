@@ -1,12 +1,11 @@
 import { useWriteContract } from "wagmi";
-import { bookingAbi, bookingAddress } from "@/constants";
+import { bookingAbi, tokenAbi, bookingAddress, tokenAddress } from "@/constants";
 import { toast } from "sonner";
 import AddReviewModal from "./AddReviewModal";
 import React, { useState } from 'react';
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
-import { exit } from "process";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -46,7 +45,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
     }
   };
 
-  const handleBookRoom = async () => {
+  const handleBookRoom = async () => {    
     let today = new Date();
     today.setHours(0,0,0,0);
     let timezoneOffset = today.getTimezoneOffset();
@@ -65,7 +64,15 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
     let s = (start.getTime() - timezoneOffset*60*1000) / 1000 / 3600 / 24;
     let e = (end.getTime() - timezoneOffset*60*1000) / 1000 / 3600 / 24;
 
-    try {
+    try {    
+      const approveTx = await writeContractAsync({
+        abi: tokenAbi,
+        address: tokenAddress,
+        functionName: "approve",
+        args: [bookingAddress, (room.pricePerNight) * (BigInt(e - s))],
+      });
+      console.log(approveTx);
+  
       const bookRoomTx = await writeContractAsync({
         abi: bookingAbi,
         address: bookingAddress,
@@ -73,7 +80,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
         args: [room.category, s, e],
       });
 
-      console.log("room booking hash:", bookRoomTx);
+      console.log("room booking hash:", bookRoomTx);    
     } catch (err: any) {
       toast.error("Transaction Failed: " + err.message);
     }

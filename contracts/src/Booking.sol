@@ -84,7 +84,6 @@ contract HotelBooking {
         uint256 totalPrice = (checkOutDate - checkInDate) * rooms[roomId].pricePerNight;
         require(token.balanceOf(msg.sender) >= totalPrice, "Insufficient token balance");
 
-        require(token.approve(address(this), totalPrice), "failed to get approval");
         require(token.transferFrom(msg.sender, address(this), totalPrice), "Token transfer failed");
 
         roomBookings[roomId] = Booking({
